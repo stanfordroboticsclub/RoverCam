@@ -27,10 +27,7 @@ function finish {
 trap finish EXIT
 
 
-echo "using port ${port}..."
-
 cmd_ip=$(ifconfig)
-
 if [[ $cmd_ip =~ $rgx_ip ]]
     then
         ip_viewer="${BASH_REMATCH[1]}"
@@ -40,7 +37,9 @@ if [[ $cmd_ip =~ $rgx_ip ]]
         exit 1
 fi
 
-cmd_resolve=$(avahi-resolve --name ${args[0]})
+
+cmd_resolve=$(avahi-resolve -4 --name ${args[0]})
+echo $cmd_resolve
 if [[ $cmd_resolve =~ $rgx_ip_any ]]
     then
         ip_pi="${BASH_REMATCH[1]}"
@@ -50,6 +49,9 @@ if [[ $cmd_resolve =~ $rgx_ip_any ]]
         echo "failed to resolve pi's IP address"
         exit 1
 fi
+let port+=5000
+echo "using port ${port}..."
+
 
 
 gst-launch-1.0 udpsrc port=${port} ! gdpdepay ! rtph264depay ! avdec_h264 ! videoconvert ! autovideosink sync=false &
@@ -58,5 +60,6 @@ gst-launch-1.0 udpsrc port=${port} ! gdpdepay ! rtph264depay ! avdec_h264 ! vide
 cam_launch_suffix=" ! h264parse ! queue ! rtph264pay pt=96 ! gdppay ! udpsink host=${ip_viewer} port=$port"
 
 cam_launch="${cam_launch_med}${cam_launch_suffix}"
+echo $cam_launch
 
 ssh -t pi@${ip_pi} ${cam_launch}
