@@ -12,10 +12,13 @@ autoconf automake libtool pkg-config gstreamer1.0-tools gstreamer1.0-plugins-bad
 
 wget https://github.com/thaytan/gst-rpicamsrc/archive/master.zip
 unzip master.zip
+
 cd gst-rpicamsrc-master
-sudo ./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
+sudo bash ./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
 sudo make
 sudo make install
+
+cd ..
 
 
 for file in *.service; do
