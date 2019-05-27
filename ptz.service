@@ -1,0 +1,11 @@
+[Unit]
+Description=Sub - 8120 angle delta
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/RoverCam/pan_tilt.py
+StandardOutput=syslog
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

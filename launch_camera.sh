@@ -62,4 +62,7 @@ cam_launch_suffix=" ! h264parse ! queue ! rtph264pay pt=96 ! gdppay ! udpsink ho
 cam_launch="${cam_launch_med}${cam_launch_suffix}"
 echo $cam_launch
 
+
+# kill existing camera stream session, if any
+ssh -t pi@${ip_pi} "pkill -u pi -f gst-launch-1.0)"
 ssh -t pi@${ip_pi} ${cam_launch}
