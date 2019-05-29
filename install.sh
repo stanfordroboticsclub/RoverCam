@@ -10,6 +10,8 @@ cd $FOLDER
 yes | sudo apt-get install \
 autoconf automake libtool pkg-config gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 
+sudo apt install -y autoconf
+
 wget https://github.com/thaytan/gst-rpicamsrc/archive/master.zip
 unzip master.zip
 
