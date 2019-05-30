@@ -59,10 +59,10 @@ gst-launch-1.0 udpsrc port=${port} ! gdpdepay ! rtph264depay ! avdec_h264 ! vide
 
 cam_launch_suffix=" ! h264parse ! queue ! rtph264pay pt=96 ! gdppay ! udpsink host=${ip_viewer} port=$port"
 
-cam_launch="${cam_launch_med}${cam_launch_suffix}"
+cam_launch="${cam_launch_hi}${cam_launch_suffix}"
 echo $cam_launch
 
 
 # kill existing camera stream session, if any
-ssh -t pi@${ip_pi} "pkill -u pi -f gst-launch-1.0)"
+ssh -t pi@${ip_pi} "pkill -u pi -f gst-launch-1.0"
 ssh -t pi@${ip_pi} ${cam_launch}
