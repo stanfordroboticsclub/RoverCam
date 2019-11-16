@@ -44,6 +44,7 @@ working: (from https://www.chiefdelphi.com/t/stream-opencv-output-remotely-like-
 import shlex
 import os
 import subprocess
+import UDPComms
 
 from imutils.video import VideoStream
 
@@ -51,29 +52,41 @@ class Server:
     def __init__(self):
         pass
 
-    def connect(port, host):
-        pass
+    def init_imshow(self, port, host):
+        # works
+     global gstCommand
+     if os.name == "posix":
+         args = shlex.split(('gst-launch-1.0 fdsrc ! videoparse format="i420" width=320 height=240' +
+         ' ! x264enc speed-preset=1 tune=zerolatency bitrate={}' +
+         ' ! rtph264pay config-interval=1 pt=96 ! udpsink host={} port={}').format(
+         bitrate, host, port))
+         gstCommand = subprocess.Popen(args, stdin=subprocess.PIPE)
 
     """ display new image array on remote viewer """
-    def imshow():
+    def imshow(self, img):
         pass
 
-    def run_rpi():
+    def run_rpi(self, port, host):
         cmd = """gst-launch-1.0 rpicamsrc preview=false bitrate=2000000 sensor-mode=5 ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high' ! h264parse ! queue ! rtph264pay pt=96 ! gdppay ! udpsink host=10.0.0.54 port=5001"""
 
-    def run_usb():
+        # works
+        cmd = """gst-launch-1.0 rpicamsrc preview=false bitrate=2000000 sensor-mode=5 ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high' ! h264parse ! queue ! rtph264pay pt=96 ! udpsink host=10.0.0.54 port=5001"""
+
+    def run_usb(self, port, host):
         pass
 
 class RemoteViewer:
     def listen(self, port):
-
+        # works with run_rpi and imshow
         cmd = 'gst-launch-1.0 udpsrc port=5001 caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! autovideosink'
-        pass
 
     def stream(self, hostname):
         pass
 
-    def read():
+        send (hostname, my_ip, resolution)
+
+
+    def read(self):
         pass
 
     def window(self):
