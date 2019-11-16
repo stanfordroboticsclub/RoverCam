@@ -49,10 +49,13 @@ import UDPComms
 from imutils.video import VideoStream
 
 class Server:
-    def __init__(self):
-        pass
+    def __init__(self, mode="rpi"):
+
+        self.mode = mode
+        self.commands = {"rpi": "test"}
 
     def init_imshow(self, port, host):
+
         # works
      global gstCommand
      if os.name == "posix":
@@ -64,7 +67,10 @@ class Server:
 
     """ display new image array on remote viewer """
     def imshow(self, img):
-        pass
+        if self.mode != "rpi":
+            print("Error")
+            return
+        gstCommand.stdin.write(cv2.cvtColor(img, cv2.COLOR_BGR2YUV_I420))
 
     def run_rpi(self, port, host):
         cmd = """gst-launch-1.0 rpicamsrc preview=false bitrate=2000000 sensor-mode=5 ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high' ! h264parse ! queue ! rtph264pay pt=96 ! gdppay ! udpsink host=10.0.0.54 port=5001"""
