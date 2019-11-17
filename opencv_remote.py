@@ -54,6 +54,11 @@ class Server:
         self.mode = mode
         self.commands = {"rpi": "test"}
 
+
+    def listen(self):
+        pass
+        # blocking listens for conenction for viewer
+
     def init_imshow(self, port, host):
 
         # works
@@ -75,28 +80,30 @@ class Server:
     def run_rpi(self, port, host):
         cmd = """gst-launch-1.0 rpicamsrc preview=false bitrate=2000000 sensor-mode=5 ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high' ! h264parse ! queue ! rtph264pay pt=96 ! gdppay ! udpsink host=10.0.0.54 port=5001"""
 
-        # works
+        # works (no gdppay)
         cmd = """gst-launch-1.0 rpicamsrc preview=false bitrate=2000000 sensor-mode=5 ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high' ! h264parse ! queue ! rtph264pay pt=96 ! udpsink host=10.0.0.54 port=5001"""
 
     def run_usb(self, port, host):
         pass
 
 class RemoteViewer:
-    def listen(self, port):
-        # works with run_rpi and imshow
-        cmd = 'gst-launch-1.0 udpsrc port=5001 caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! autovideosink'
+    def __init__(self, mode = 'opencv'):
+        self.mode = mode
 
     def stream(self, hostname):
-        pass
-
         send (hostname, my_ip, resolution)
+        port = recv()
 
+    def start(self):
+        cmd = 'gst-launch-1.0 udpsrc port={} caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! fdsink'
 
-    def read(self):
-        pass
+        return imutils.FileVideoStream(cmd).start()
+         # args = shlex.split((cmd).format(port))
+         # gstCommand = subprocess.Popen(args, stdout=subprocess.PIPE)
+         # img = gstCommand.stdout.read()
 
     def window(self):
-        pass
+        cmd = 'gst-launch-1.0 udpsrc port=5001 caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! autovideosink'
 
 
 
