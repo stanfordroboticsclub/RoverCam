@@ -102,9 +102,13 @@ class RemoteViewer:
     REQUEST_PORT = 5000
     def __init__(self, mode = 'opencv'):
         self.mode = mode
+        self.pub = UDPComms.Publisher(self.REQUEST_PORT)
 
+    # {"ip": viewer_ip, "host": hostname, "resolution": (x,y), "port":port}
     def stream(self, hostname):
         send (hostname, my_ip, resolution)
+
+        self.pub.send({"ip": viewer_ip, "host": hostname, "resolution": (x,y), "port":port})
         port = recv()
 
     def start(self):
