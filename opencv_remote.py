@@ -45,17 +45,22 @@ import shlex
 import os
 import subprocess
 import UDPComms
+import re
 
 from imutils.video import VideoStream
 
+
+from enum import Enum
+
 class Server:
     REQUEST_PORT = 5000
-    def __init__(self, mode="rpi"):
 
+    INPUT = Enum("INPUT", "RPI_CAM USB_CAM OPENCV")
+    def __init__(self, mode=self.INPUT.RPI_CAM):
         self.mode = mode
-        self.commands = {"rpi": "test"}
 
         self.sub = UDPComms.Subscriber(self.REQUEST_PORT)
+        self.hostname = subprocess.run('hostname', capture_output = True).stdout.decode()
 
 
     def listen(self):
@@ -84,9 +89,10 @@ class Server:
 
     """ display new image array on remote viewer """
     def imshow(self, img):
-        if self.mode != "rpi":
+        if self.mode != self.INPUT.OPENCV:
             print("Error")
             return
+
         gstCommand.stdin.write(cv2.cvtColor(img, cv2.COLOR_BGR2YUV_I420))
 
     def run_rpi(self, port, host):
@@ -100,30 +106,34 @@ class Server:
 
 class RemoteViewer:
     REQUEST_PORT = 5000
-    def __init__(self, mode = 'opencv'):
+    OUTPUT = Enum("OUPUT", "OPENCV WINDOW")
+
+    def get_my_ip():
+        a = subprocess.run('ifconfig',capture_output=1)
+        m = re.search( b"10\.0\.0\.[1-9][0-9]{0,2}", a.stdout)
+        if m is not None:
+            return m.decode()
+        else:
+            return None
+
+    def __init__(self, mode = self.OUTPUT.WINDOW):
         self.mode = mode
         self.pub = UDPComms.Publisher(self.REQUEST_PORT)
+        self.ip = self.get_my_ip()
+        self.process = None
 
-    # {"ip": viewer_ip, "host": hostname, "resolution": (x,y), "port":port}
     def stream(self, hostname):
-        send (hostname, my_ip, resolution)
+        port = 5001
+        self.pub.send({"ip": self.ip, "host": hostname, "resolution": (300,200), "port":port})
+        # port = recv()
 
-        self.pub.send({"ip": viewer_ip, "host": hostname, "resolution": (x,y), "port":port})
-        port = recv()
+        if self.mode == self.OUTPUT.WINDOW:
+            cmd = 'gst-launch-1.0 udpsrc port={} caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! autovideosink'.format(port)
+            args = shlex.split(cmd)
+            self.process = subprocess.Popen(args)
 
-    def start(self):
-        cmd = 'gst-launch-1.0 udpsrc port={} caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! fdsink'
-
-        return imutils.FileVideoStream(cmd).start()
-         # args = shlex.split((cmd).format(port))
-         # gstCommand = subprocess.Popen(args, stdout=subprocess.PIPE)
-         # img = gstCommand.stdout.read()
-
-    def window(self):
-        cmd = 'gst-launch-1.0 udpsrc port=5001 caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! autovideosink'
-
-
-
-
+        elif self.mode == self.OUTPUT.OPENCV:
+            cmd = 'gst-launch-1.0 udpsrc port={} caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! fdsink'
+            return imutils.FileVideoStream(cmd).start()
 
 
