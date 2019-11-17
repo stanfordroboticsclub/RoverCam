@@ -49,15 +49,27 @@ import UDPComms
 from imutils.video import VideoStream
 
 class Server:
+    REQUEST_PORT = 5000
     def __init__(self, mode="rpi"):
 
         self.mode = mode
         self.commands = {"rpi": "test"}
 
+        self.sub = UDPComms.Subscriber(self.REQUEST_PORT)
+
 
     def listen(self):
-        pass
         # blocking listens for conenction for viewer
+
+        while 1:
+            try:
+                msg = self.sub.recv()
+            except UDPComms.timeout:
+                pass
+            else:
+                if msg['host': self.hostname]:
+                    pass
+
 
     def init_imshow(self, port, host):
 
@@ -87,6 +99,7 @@ class Server:
         pass
 
 class RemoteViewer:
+    REQUEST_PORT = 5000
     def __init__(self, mode = 'opencv'):
         self.mode = mode
 
