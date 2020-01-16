@@ -66,3 +66,14 @@ echo $cam_launch
 # kill existing camera stream session, if any
 ssh -t pi@${ip_pi} "pkill -u pi -f gst-launch-1.0"
 ssh -t pi@${ip_pi} ${cam_launch}
+
+
+
+# camera side
+ # gst-launch-1.0 rpicamsrc preview=false bitrate=1000000 sensor-mode=6 ! 'video/x-h264,width=640,height=480,framerate=45/1,profile=high' ! h264parse ! queue ! rtph264pay pt=96 ! gdppay ! udpsink host=10.0.0.54 port=5001
+
+# camera side without rpiscamsrc
+ # raspivid -fps 26 -h 480 -w 640 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 fdsrc ! 'video/x-h264,width=640,height=480,framerate=45/1,profile=high' ! h264parse ! queue ! rtph264pay pt=96 ! gdppay ! udpsink host=10.0.0.54 port=5001
+
+# viewer
+ # gst-launch-1.0 udpsrc port=5001 ! gdpdepay ! rtph264depay ! avdec_h264 ! videoconvert ! autovideosink sync=false
