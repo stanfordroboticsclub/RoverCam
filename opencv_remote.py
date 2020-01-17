@@ -60,11 +60,12 @@ class Server:
         self.mode = mode
 
         self.sub = UDPComms.Subscriber(REQUEST_PORT)
-        self.hostname = subprocess.run('hostname', capture_output = True).stdout.decode()
+        self.hostname = subprocess.run('hostname', stdout=subprocess.PIPE).stdout.strip()
         self.cmd = None
 
     def listen(self):
         # blocking listens for conenction for viewer
+        print("looking for ", self.hostname)
         while 1:
             try:
                 msg = self.sub.recv()
@@ -72,7 +73,8 @@ class Server:
             except UDPComms.timeout:
                 pass
             else:
-                if msg['host': self.hostname]:
+                print("got", msg['host'])
+                if msg['host'] ==  self.hostname:
                     if self.mode == self.INPUT.OPENCV:
                         self.init_imshow( msg["port"] , msg["ip"] )
                     elif self.mode == self.INPUT.RPI_CAM:
@@ -114,11 +116,12 @@ class Server:
 class RemoteViewer:
     OUTPUT = Enum("OUPUT", "OPENCV WINDOW")
 
-    def get_my_ip():
+    def get_my_ip(self):
+        # capture_output is only in python 3.7 and above
         a = subprocess.run('ifconfig',capture_output=1)
         m = re.search( b"10\.0\.0\.[1-9][0-9]{0,2}", a.stdout)
         if m is not None:
-            return m.decode()
+            return m.group()
         else:
             print("Can't find my ip on robot network!")
             return None
