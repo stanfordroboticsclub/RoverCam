@@ -60,7 +60,7 @@ class Server:
         self.mode = mode
 
         self.sub = UDPComms.Subscriber(REQUEST_PORT)
-        self.hostname = subprocess.run('hostname', stdout=subprocess.PIPE).stdout.strip()
+        self.hostname = subprocess.run('hostname', stdout=subprocess.PIPE).stdout.strip().decode("utf-8")
         self.cmd = None
 
     def listen(self):
