@@ -86,6 +86,15 @@ class Server:
 
                     break
 
+    """ display new image array on remote viewer """
+    def imshow(self, name, img):
+        if self.mode != self.INPUT.OPENCV or self.cmd is None:
+            print("Error")
+            return
+
+        self.cmd.stdin.write(cv2.cvtColor(img, cv2.COLOR_BGR2YUV_I420))
+
+
 
     def init_imshow(self, port, host):
         # works
@@ -93,14 +102,6 @@ class Server:
                             ' ! x264enc speed-preset=1 tune=zerolatency bitrate=1000000' +
                             ' ! rtph264pay config-interval=1 pt=96 ! udpsink host={} port={}').format(host, port))
         self.cmd = subprocess.Popen(args, stdin=subprocess.PIPE)
-
-    """ display new image array on remote viewer """
-    def imshow(self, img):
-        if self.mode != self.INPUT.OPENCV or self.cmd is None:
-            print("Error")
-            return
-
-        self.cmd.stdin.write(cv2.cvtColor(img, cv2.COLOR_BGR2YUV_I420))
 
     def run_rpi(self, port, host):
         # works (no gdppay)
