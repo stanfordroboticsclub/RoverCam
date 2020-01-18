@@ -50,6 +50,7 @@ import re
 from imutils.video import VideoStream, FileVideoStream
 
 from enum import Enum
+import time
 
 REQUEST_PORT = 5000
 class Server:
@@ -75,6 +76,7 @@ class Server:
             else:
                 print("got", msg['host'])
                 if msg['host'] ==  self.hostname:
+                    time.sleep(1)
                     if self.mode == self.INPUT.OPENCV:
                         self.init_imshow( msg["port"] , msg["ip"] )
                     elif self.mode == self.INPUT.RPI_CAM:
@@ -141,7 +143,10 @@ class RemoteViewer:
         if self.mode == self.OUTPUT.WINDOW:
             cmd = 'gst-launch-1.0 udpsrc port={} caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! autovideosink'.format(port)
             args = shlex.split(cmd)
-            self.process = subprocess.Popen(args)
+            # shell = True need to open a window. $DISPLAY needs to be set?
+            print(args)
+            self.process = subprocess.Popen(cmd, shell=True)
+            # self.process = subprocess.Popen(args)
             while(1):
                 pass
 
