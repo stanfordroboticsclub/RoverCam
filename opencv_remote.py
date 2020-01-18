@@ -48,6 +48,7 @@ import UDPComms
 import re
 
 from imutils.video import VideoStream, FileVideoStream
+import cv2
 
 from enum import Enum
 import time
