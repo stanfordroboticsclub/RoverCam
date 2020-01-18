@@ -145,8 +145,8 @@ class RemoteViewer:
             args = shlex.split(cmd)
             # shell = True need to open a window. $DISPLAY needs to be set?
             print(args)
-            self.process = subprocess.Popen(cmd, shell=True)
-            # self.process = subprocess.Popen(args)
+            # self.process = subprocess.Popen(cmd, shell=True)
+            self.process = subprocess.Popen(args)
             while(1):
                 pass
 
