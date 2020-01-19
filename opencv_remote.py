@@ -58,7 +58,6 @@ class Server:
         # works
         arg = ('gst-launch-1.0 -v fdsrc ! videoparse format="i420" width=320 height=240' +\
                             ' ! x264enc speed-preset=1 tune=zerolatency bitrate=1000000' +\
-                            ' ! rtph264pay config-interval=1 pt=96 ! udpsink host={} port={}'.format(host, port))
         # args = shlex.split(arg)
         self.process = subprocess.Popen(arg, stdin=subprocess.PIPE, shell=True)
 
