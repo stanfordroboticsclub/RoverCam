@@ -56,16 +56,16 @@ class Server:
 
     def init_imshow(self, port, host):
         # works
-        args = shlex.split(('gst-launch-1.0 fdsrc ! videoparse format="i420" width=320 height=240' +\
+        arg = ('gst-launch-1.0 -v fdsrc ! videoparse format="i420" width=320 height=240' +\
                             ' ! x264enc speed-preset=1 tune=zerolatency bitrate=1000000' +\
-                            " ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high' ! h264parse" +\
-                            ' ! rtph264pay  pt=96 ! gdppay ! udpsink host={} port={}').format(host, port))
-        self.process = subprocess.Popen(args, stdin=subprocess.PIPE)
+                            ' ! rtph264pay config-interval=1 pt=96 ! udpsink host={} port={}'.format(host, port))
+        # args = shlex.split(arg)
+        self.process = subprocess.Popen(arg, stdin=subprocess.PIPE, shell=True)
 
     def run_rpi(self, port, host):
         arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 fdsrc" +\
-                " ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high' ! h264parse" +\
-                " ! queue ! rtph264pay pt=96 ! gdppay ! udpsink host={} port={}".format(host,port)
+                " ! h264parse" +\
+                " ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
         # args = shlex.split(arg)
 
         self.process = subprocess.Popen(arg, shell=True)
