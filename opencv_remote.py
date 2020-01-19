@@ -74,7 +74,8 @@ class Server:
 
 
     def run_usb(self, port, host):
-        arg = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480 ! videoconvert ! avenc_h264_omx "+\
+        # arg = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480 ! videoconvert ! avenc_h264_omx "+\
+        arg = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-h264,width=640,height=480 ! "+\
         # arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 fdsrc" +\
               " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port))
         # args = shlex.split(arg)
