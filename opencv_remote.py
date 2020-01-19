@@ -115,9 +115,13 @@ class RemoteViewer:
 
 
         elif self.mode == self.OUTPUT.OPENCV:
-            # cmd = 'gst-launch-1.0 udpsrc port={} caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! fdsink'
-            cmd = 'gst-launch-1.0 udpsrc port={} ! gdpdepay ! rtph264depay ! avdec_h264 ! fdsink'
-            return imutils.FileVideoStream(cmd).start()
+            arg = 'gst-launch-1.0 udpsrc port={} caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! fdsink sync=false'.format(port)
+            # cmd = 'gst-launch-1.0 udpsrc port={} ! gdpdepay ! rtph264depay ! avdec_h264 ! fdsink'
+            self.process = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
+
+    def read(self):
+        return self.process.stdout.read(320*240*3)
+
 
 import argparse
 if __name__ == "__main__":
