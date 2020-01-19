@@ -63,8 +63,8 @@ class Server:
 
     def run_rpi(self, port, host):
         # works (no gdppay)
-        arg = "raspivid -fps 26 -h 1280 -w 720 -md 6 -n -t 0 -b 1000000 -o -" +
-              " | gst-launch-1.0 fdsrc ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high'" +
+        arg = "raspivid -fps 26 -h 1280 -w 720 -md 6 -n -t 0 -b 1000000 -o -" +\
+              " | gst-launch-1.0 fdsrc ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high'" +\
               " ! h264parse ! queue ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
         args = shlex.split(arg)
 
