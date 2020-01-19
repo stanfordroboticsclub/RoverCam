@@ -68,7 +68,7 @@ class Server:
               " ! h264parse ! queue ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
         args = shlex.split(arg)
 
-        self.process = subprocess.Popen(args)
+        self.process = subprocess.Popen(args, shell=True)
         self.process.wait()
         print("video process died")
 
