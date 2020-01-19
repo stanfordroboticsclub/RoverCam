@@ -74,7 +74,14 @@ class Server:
 
 
     def run_usb(self, port, host):
-        pass
+        arg = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480 ! videoconvert ! avenc_h264_omx "+\
+        # arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 fdsrc" +\
+              " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port))
+        # args = shlex.split(arg)
+
+        self.process = subprocess.Popen(arg, shell=True)
+        self.process.wait()
+        print("video process died")
 
 class RemoteViewer:
     OUTPUT = Enum("OUPUT", "OPENCV WINDOW")
@@ -126,11 +133,14 @@ class RemoteViewer:
 import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('op', choices=['server', 'viewer'])
+    parser.add_argument('op', choices=['server', 'usb','viewer'])
     args = parser.parse_args()
 
     if args.op == "server":
         s = Server()
+        s.listen()
+    elif args.op == "usb":
+        s = Server(Server.INPUT.USB_CAM)
         s.listen()
 
     elif args.op == "viewer":
