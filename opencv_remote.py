@@ -56,16 +56,16 @@ class Server:
 
     def init_imshow(self, port, host):
         # works
-        args = shlex.split(('gst-launch-1.0 fdsrc ! videoparse format="i420" width=320 height=240' +
-                            ' ! x264enc speed-preset=1 tune=zerolatency bitrate=1000000' +
+        args = shlex.split(('gst-launch-1.0 fdsrc ! videoparse format="i420" width=320 height=240' +\
+                            ' ! x264enc speed-preset=1 tune=zerolatency bitrate=1000000' +\
+                            " ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high' ! h264parse" +\
                             ' ! rtph264pay  pt=96 ! gdppay ! udpsink host={} port={}').format(host, port))
         self.process = subprocess.Popen(args, stdin=subprocess.PIPE)
 
     def run_rpi(self, port, host):
-        # works (no gdppay)
-        arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o -" +\
-              " | gst-launch-1.0 fdsrc ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high'" +\
-              " ! h264parse ! queue ! rtph264pay pt=96 ! gdppay ! udpsink host={} port={}".format(host,port)
+        arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 fdsrc" +\
+                " ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high' ! h264parse" +\
+                " ! queue ! rtph264pay pt=96 ! gdppay ! udpsink host={} port={}".format(host,port)
         # args = shlex.split(arg)
 
         self.process = subprocess.Popen(arg, shell=True)
@@ -103,6 +103,7 @@ class RemoteViewer:
         self.pub.send({"ip": self.ip, "host": hostname, "resolution": (320,240), "port":port})
 
         if self.mode == self.OUTPUT.WINDOW:
+            # caps="application/x-rtp" is what makes things slow. replaces with gdppay
             # cmd = 'gst-launch-1.0 udpsrc port={} caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! autovideosink sync=false'.format(port)
             cmd = 'gst-launch-1.0 udpsrc port={} ! gdpdepay ! rtph264depay ! avdec_h264 ! autovideosink sync=false'.format(port)
             args = shlex.split(cmd)
