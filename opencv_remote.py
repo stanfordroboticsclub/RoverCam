@@ -56,15 +56,15 @@ class Server:
 
     def init_imshow(self, port, host):
         # works
-        arg = ('gst-launch-1.0 -v fdsrc ! videoparse format="i420" width=320 height=240' +\
+        arg = 'gst-launch-1.0 -v fdsrc ! videoparse format="i420" width=320 height=240' +\
                             ' ! x264enc speed-preset=1 tune=zerolatency bitrate=1000000' +\
+                            " ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
         # args = shlex.split(arg)
         self.process = subprocess.Popen(arg, stdin=subprocess.PIPE, shell=True)
 
     def run_rpi(self, port, host):
         arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 fdsrc" +\
-                " ! h264parse" +\
-                " ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
+              " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
         # args = shlex.split(arg)
 
         self.process = subprocess.Popen(arg, shell=True)
@@ -103,8 +103,8 @@ class RemoteViewer:
 
         if self.mode == self.OUTPUT.WINDOW:
             # caps="application/x-rtp" is what makes things slow. replaces with gdppay
-            # cmd = 'gst-launch-1.0 udpsrc port={} caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! autovideosink sync=false'.format(port)
-            cmd = 'gst-launch-1.0 udpsrc port={} ! gdpdepay ! rtph264depay ! avdec_h264 ! autovideosink sync=false'.format(port)
+            cmd = 'gst-launch-1.0 udpsrc port={} caps="application/x-rtp" ! rtph264depay ! avdec_h264 ! autovideosink sync=false'.format(port)
+            # cmd = 'gst-launch-1.0 udpsrc port={} ! gdpdepay ! rtph264depay ! avdec_h264 ! autovideosink sync=false'.format(port)
             args = shlex.split(cmd)
             # shell = True need to open a window. $DISPLAY needs to be set?
             # print(args)
