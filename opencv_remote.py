@@ -63,12 +63,12 @@ class Server:
 
     def run_rpi(self, port, host):
         # works (no gdppay)
-        arg = "raspivid -fps 26 -h 1280 -w 720 -md 6 -n -t 0 -b 1000000 -o -" +\
+        arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o -" +\
               " | gst-launch-1.0 fdsrc ! 'video/x-h264,width=1280,height=720,framerate=45/1,profile=high'" +\
               " ! h264parse ! queue ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
         args = shlex.split(arg)
 
-        self.process = subprocess.Popen(args, shell=True)
+        self.process = subprocess.Popen(arg, shell=True)
         self.process.wait()
         print("video process died")
 
