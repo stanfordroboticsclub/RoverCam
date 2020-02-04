@@ -22,7 +22,7 @@ class Server:
         self.hostname = subprocess.run('hostname', stdout=subprocess.PIPE).stdout.strip().decode("utf-8")
         self.process = None
 
-    def listen(self):
+    def listen(self,loop=True):
         """" block until connection from viewer """
         print("looking for ", self.hostname)
         while 1:
@@ -30,19 +30,26 @@ class Server:
                 msg = self.sub.recv()
                 print("get msg: ", msg)
             except UDPComms.timeout:
-                pass
+                if not loop:
+                    return
+                
             else:
                 print("got", msg['host'])
                 if msg['host'] ==  self.hostname:
-                    time.sleep(1)
-                    if self.mode == self.INPUT.OPENCV:
-                        self.init_imshow( msg["port"] , msg["ip"] )
-                    elif self.mode == self.INPUT.RPI_CAM:
-                        self.run_rpi( msg["port"] , msg["ip"] )
-                    elif self.mode == self.INPUT.USB_CAM:
-                        self.run_usb( msg["port"] , msg["ip"] )
+                    if msg.get('cmd') ==  'close':
+                        self.stop_process()
+                    else:
+                        time.sleep(1) # sleep is necessary to not race ahead of viewer
+                        self.init_process(msg["port"] , msg["ip"])
+                        break
 
-                    break
+    def stop_process(self):
+        if self.process != None:
+            self.process.terminate()
+            if self.process.poll():
+                self.process.kill()
+        self.process = None
+
 
     """ display new image array on remote viewer """
     def imshow(self, name, img):
@@ -52,7 +59,15 @@ class Server:
 
         self.process.stdin.write(cv2.cvtColor(img, cv2.COLOR_BGR2YUV_I420))
 
+    def init_process(self,port,ip):
+        self.stop_process()
 
+        if self.mode == self.INPUT.OPENCV:
+            self.init_imshow( port , ip )
+        elif self.mode == self.INPUT.RPI_CAM:
+            self.run_rpi( port , ip )
+        elif self.mode == self.INPUT.USB_CAM:
+            self.run_usb( port , ip )
 
     def init_imshow(self, port, host):
         # works
@@ -70,10 +85,8 @@ class Server:
         # gst-launch-1.0 v4l2src ! video/x-h264,width=1280,height=720,framerate=30/1 ! h264parse ! rtph264pay pt=127 config-interval=4 ! udpsink host=10.0.0.54 port=5001 sync=false
 
         self.process = subprocess.Popen(arg, shell=True)
-        self.process.wait()
-        print("video process died")
-
-
+        # self.process.wait()
+        # print("video process died")
 
     def run_usb(self, port, host):
         # arg = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480 ! videoconvert ! avenc_h264_omx "+\
@@ -89,8 +102,8 @@ class Server:
         # gst-launch-1.0 -e uvch264src device=/dev/video0 initial-bitrate=1000000 average-bitrate=10000000 iframe-period=1000 name=src auto-start=true src.vfsrc ! queue ! video/x-raw,width=320,height=240,framerate=30/1 ! fakesink src.vidsrc ! queue ! video/x-h264,width=1920,height=1080,framerate=30/1,profile=constrained-baseline ! h264parse ! rtph264pay pt=96 ! udpsink host=10.0.0.54 port=5001
 
         self.process = subprocess.Popen(arg, shell=True)
-        self.process.wait()
-        print("video process died")
+        # self.process.wait()
+        # print("video process died")
 
 class RemoteViewer:
     OUTPUT = Enum("OUPUT", "OPENCV WINDOW")
@@ -110,8 +123,25 @@ class RemoteViewer:
             mode = self.OUTPUT.WINDOW
         self.mode = mode
         self.pub = UDPComms.Publisher(REQUEST_PORT)
+
         self.ip = self.get_my_ip()
+        self.ip = self.resolution = (320, 240)
+
+
         self.process = None
+
+    def close(self):
+        # send 3 times for reliability :P
+        self.pub.send({"host": hostname, "cmd": "close")
+        self.pub.send({"host": hostname, "cmd": "close")
+        self.pub.send({"host": hostname, "cmd": "close")
+
+    def open(self):
+        port = 5001
+        self.pub.send({"ip": self.ip, "host": hostname, "resolution": (320,240), "port":port})
+
+    def __del__(self):
+        self.close()
 
     def stream(self, hostname):
         port = 5001
@@ -137,6 +167,25 @@ class RemoteViewer:
 
     def read(self):
         return self.process.stdout.read(320*240*3)
+
+    def monitor(self, loop = True):
+        if loop:
+            while 1:
+                self.process.wait()
+                self.process = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
+                # resend request
+                time.sleep(1)
+                self.open()
+
+        else:
+            if self.process.poll():
+                return
+            else:
+                self.process = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
+                # resend request
+                time.sleep(1)
+
+
 
 
 import argparse
