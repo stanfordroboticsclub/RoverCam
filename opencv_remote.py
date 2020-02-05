@@ -20,6 +20,7 @@ class Server:
 
         self.sub = UDPComms.Subscriber(REQUEST_PORT, timeout=0)
         self.hostname = subprocess.run('hostname', stdout=subprocess.PIPE).stdout.strip().decode("utf-8")
+
         self.process = None
 
     def listen(self,loop=True):
@@ -129,25 +130,25 @@ class RemoteViewer:
         self.ip = self.get_my_ip()
         self.ip = self.resolution = (320, 240)
 
-
         self.process = None
+        self.remote_host = None
 
     def close(self):
         # send 3 times for reliability :P
-        self.pub.send({"host": hostname, "cmd": "close")
-        self.pub.send({"host": hostname, "cmd": "close")
-        self.pub.send({"host": hostname, "cmd": "close")
+        if self.remote_host is None:
+            print("Error")
+            return
+        self.pub.send({"host": self.remote_host, "cmd": "close"})
+        self.pub.send({"host": self.remote_host, "cmd": "close"})
+        self.pub.send({"host": self.remote_host, "cmd": "close"})
 
     def open(self):
-        port = 5001
-        self.pub.send({"ip": self.ip, "host": hostname, "resolution": (320,240), "port":port})
+        port = 5001 # TODO CHANGE TO pick free port
+        if self.remote_host is None:
+            print("Error")
+            return
 
-    def __del__(self):
-        self.close()
-
-    def stream(self, hostname):
-        port = 5001
-        self.pub.send({"ip": self.ip, "host": hostname, "resolution": (320,240), "port":port})
+        self.pub.send({"ip": self.ip, "host": self.remote_host, "resolution": self.resolution, "port":port})
 
         if self.mode == self.OUTPUT.WINDOW:
             # caps="application/x-rtp" is what makes things slow. replaces with gdppay
@@ -158,8 +159,6 @@ class RemoteViewer:
             # print(args)
             # self.process = subprocess.Popen(cmd, shell=True)
             self.process = subprocess.Popen(args)
-            self.process.wait()
-            print("window died")
 
 
         elif self.mode == self.OUTPUT.OPENCV:
@@ -167,16 +166,26 @@ class RemoteViewer:
             # cmd = 'gst-launch-1.0 udpsrc port={} ! gdpdepay ! rtph264depay ! avdec_h264 ! fdsink'
             self.process = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
 
+    def __del__(self):
+        self.close()
+
+    def stream(self, hostname):
+        self.remote_host = hostname
+        self.open()
+
+        if self.mode == self.OUTPUT.WINDOW:
+            self.monitor(loop = True)
+
     def read(self):
+        # self.monitor(loop= False)
         return self.process.stdout.read(320*240*3)
 
     def monitor(self, loop = True):
+        # TODO FINSHI
         if loop:
             while 1:
                 self.process.wait()
                 self.process = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
-                # resend request
-                time.sleep(1)
                 self.open()
 
         else:
@@ -184,8 +193,8 @@ class RemoteViewer:
                 return
             else:
                 self.process = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
+                self.open()
                 # resend request
-                time.sleep(1)
 
 
 
