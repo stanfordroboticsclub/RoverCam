@@ -18,13 +18,13 @@ class Server:
             mode = self.INPUT.RPI_CAM
         self.mode = mode
 
-        self.sub = UDPComms.Subscriber(REQUEST_PORT)
+        self.sub = UDPComms.Subscriber(REQUEST_PORT, timeout=0)
         self.hostname = subprocess.run('hostname', stdout=subprocess.PIPE).stdout.strip().decode("utf-8")
         self.process = None
 
     def listen(self,loop=True):
         """" block until connection from viewer """
-        print("looking for ", self.hostname)
+        # print("looking for ", self.hostname)
         while 1:
             try:
                 msg = self.sub.recv()
@@ -34,14 +34,15 @@ class Server:
                     return
                 
             else:
-                print("got", msg['host'])
+                # print("got", msg['host'])
                 if msg['host'] ==  self.hostname:
                     if msg.get('cmd') ==  'close':
                         self.stop_process()
                     else:
                         time.sleep(1) # sleep is necessary to not race ahead of viewer
                         self.init_process(msg["port"] , msg["ip"])
-                        break
+                        if self.mode == self.INPUT.OPENCV:
+                            return
 
     def stop_process(self):
         if self.process != None:
@@ -53,6 +54,8 @@ class Server:
 
     """ display new image array on remote viewer """
     def imshow(self, name, img):
+        self.listen(loop=False)
+
         if self.mode != self.INPUT.OPENCV or self.process is None:
             print("Error")
             return
@@ -89,9 +92,8 @@ class Server:
         # print("video process died")
 
     def run_usb(self, port, host):
-        # arg = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480 ! videoconvert ! avenc_h264_omx "+\
+        # doesn't work
         arg = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-h264,width=640,height=480 "+\
-        # arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 fdsrc" +\
               " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port))
         # args = shlex.split(arg)
 
