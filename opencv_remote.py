@@ -78,12 +78,14 @@ class Server:
         arg = 'gst-launch-1.0 -v fdsrc ! videoparse format="i420" width=320 height=240' +\
                             ' ! x264enc speed-preset=1 tune=zerolatency bitrate=1000000' +\
                             " ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
+        print(arg)
         # args = shlex.split(arg)
         self.process = subprocess.Popen(arg, stdin=subprocess.PIPE, shell=True)
 
     def run_rpi(self, port, host):
         arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 fdsrc" +\
               " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
+        print(arg)
         # args = shlex.split(arg)
         # also works on new os
         # gst-launch-1.0 v4l2src ! video/x-h264,width=1280,height=720,framerate=30/1 ! h264parse ! rtph264pay pt=127 config-interval=4 ! udpsink host=10.0.0.54 port=5001 sync=false
@@ -96,6 +98,7 @@ class Server:
         # doesn't work
         arg = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-h264,width=640,height=480 "+\
               " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port))
+        print(arg)
         # args = shlex.split(arg)
 
         # works 180ms of laterncy
