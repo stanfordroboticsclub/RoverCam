@@ -18,7 +18,7 @@ class Server:
             mode = self.INPUT.RPI_CAM
         self.mode = mode
 
-        self.sub = UDPComms.Subscriber(REQUEST_PORT, timeout=0)
+        self.sub = UDPComms.Subscriber(REQUEST_PORT)
         self.hostname = subprocess.run('hostname', stdout=subprocess.PIPE).stdout.strip().decode("utf-8")
 
         self.process = None
