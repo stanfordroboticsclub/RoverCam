@@ -48,6 +48,8 @@ class Server:
         if self.process != None:
             self.process.terminate()
             time.sleep(1)
+            p = self.process.poll()
+            print(p)
             while self.process.poll() == None:
                 print("killing")
                 self.process.terminate()
