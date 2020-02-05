@@ -36,7 +36,6 @@ class Server:
                 
             else:
                 if msg['host'] ==  self.hostname:
-                    print("got", msg)
                     if msg.get('cmd') ==  'close':
                         self.stop_process()
                     else:
@@ -131,7 +130,7 @@ class RemoteViewer:
         self.pub = UDPComms.Publisher(REQUEST_PORT)
 
         self.ip = self.get_my_ip()
-        self.ip = self.resolution = (320, 240)
+        self.resolution = (320, 240)
 
         self.process = None
         self.remote_host = None
