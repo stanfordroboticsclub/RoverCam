@@ -87,7 +87,7 @@ class Server:
         self.process = subprocess.Popen(arg, stdin=subprocess.PIPE, shell=True)
 
     def run_rpi(self, port, host):
-        arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 fdsrc" +\
+        arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 -e fdsrc" +\
               " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
         print(arg)
         # args = shlex.split(arg)
