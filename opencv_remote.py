@@ -35,8 +35,8 @@ class Server:
                     return
                 
             else:
-                # print("got", msg['host'])
                 if msg['host'] ==  self.hostname:
+                    print("got", msg)
                     if msg.get('cmd') ==  'close':
                         self.stop_process()
                     else:
