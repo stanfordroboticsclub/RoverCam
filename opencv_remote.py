@@ -48,7 +48,9 @@ class Server:
         if self.process != None:
             self.process.terminate()
             while self.process.poll():
+                print(self.process.poll())
                 self.process.kill()
+        time.sleep(1)
         self.process = None
 
 
