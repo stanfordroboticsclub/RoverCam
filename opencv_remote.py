@@ -230,7 +230,7 @@ import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('op', choices=['server', 'usb','viewer', 'h264'])
-    parser.add_argument('hostname')
+    parser.add_argument('hostname', default=None)
     args = parser.parse_args()
 
     if args.op == "server":
@@ -245,6 +245,8 @@ if __name__ == "__main__":
 
     elif args.op == "viewer":
         r = RemoteViewer()
+        if args.hostname is None:
+            raise ValueError("need to specify hostname")
         r.stream(args.hostname)
 
     else:
