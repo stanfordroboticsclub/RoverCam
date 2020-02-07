@@ -63,7 +63,6 @@ class Server:
 
     def parse_messages(self):
         messages = self.sub.get_list()
-        print(messages)
         for msg in messages:
             if msg['host'] ==  self.hostname:
                 if msg.get('cmd') ==  'close':
