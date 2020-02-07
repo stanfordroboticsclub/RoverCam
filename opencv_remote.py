@@ -3,10 +3,9 @@ import os
 import subprocess
 import UDPComms
 import re
-import signal
-
 from imutils.video import VideoStream, FileVideoStream
-import cv2
+import cv2, imutils
+
 
 from enum import Enum
 import time
@@ -45,7 +44,7 @@ class ProcessMonitor:
         return self.process.poll() == None
 
 class Server:
-    INPUT = Enum("INPUT", "RPI_CAM USB_CAM OPENCV")
+    INPUT = Enum("INPUT", "RPI_CAM USB_CAM OPENCV USB_H264")
     def __init__(self, mode = None):
         if mode == None:
             mode = self.INPUT.RPI_CAM
@@ -62,20 +61,15 @@ class Server:
             self.parse_messages()
 
     def parse_messages(self):
-        while 1:
-            try:
-                msg = self.sub.recv()
-                print("get msg: ", msg)
-            except UDPComms.timeout:
-                break
-            else:
-                if msg['host'] ==  self.hostname:
-                    if msg.get('cmd') ==  'close':
-                        self.process.stop()
-                    else:
-                        time.sleep(1) # sleep is necessary to not race ahead of viewer
-                        cmd = self.get_cmd(msg)
-                        self.process.start(cmd)
+        messages = self.sub.get_list()
+        for msg in messages:
+            if msg['host'] ==  self.hostname:
+                if msg.get('cmd') ==  'close':
+                    self.process.stop()
+                else:
+                    time.sleep(1) # sleep is necessary to not race ahead of viewer
+                    cmd = self.get_cmd(msg)
+                    self.process.start(cmd)
 
 
     """ display new image array on remote viewer """
@@ -89,25 +83,33 @@ class Server:
             print("No viewer connected")
             return
 
+        img = imutils.resize(img, width=320) # resolution needs to match with video
         self.process.process.stdin.write(cv2.cvtColor(img, cv2.COLOR_BGR2YUV_I420))
 
     def get_cmd(self, msg):
         port, ip = msg["port"] , msg["ip"]
         if self.mode == self.INPUT.OPENCV:
+            # resolution needs to match with opencv image
             cmd = 'gst-launch-1.0 -v fdsrc ! videoparse format="i420" width=320 height=240' +\
                   ' ! x264enc speed-preset=1 tune=zerolatency bitrate=1000000' +\
                   " ! rtph264pay pt=96 ! udpsink host={} port={}".format(ip,port)
 
         elif self.mode == self.INPUT.RPI_CAM:
+            # works 120ms of latency
             cmd = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 -e fdsrc" +\
                   " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(ip,port)
+
                 # also works on new os
                 # gst-launch-1.0 v4l2src ! video/x-h264,width=1280,height=720,framerate=30/1 ! h264parse ! rtph264pay pt=127 config-interval=4 ! udpsink host=10.0.0.54 port=5001 sync=false
         elif self.mode == self.INPUT.USB_CAM:
+            # works 180ms of latency
+            cmd = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480 " +\
+                   "! x264enc bitrate=1000000 speed-preset=1 tune=zerolatency ! rtph264pay pt=96 ! udpsink host={} port={}".format(ip,port))
+
+        elif self.mode == self.INPUT.USB_H264:
+            # works 120-180ms of latency. Can support multiple cameras
             cmd = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-h264,width=1280,height=720 "+\
                   " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(ip,port))
-                    # works 180ms of laterncy
-                    #gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480 ! x264enc bitrate=1000000 speed-preset=1 tune=zerolatency ! rtph264pay pt=96 ! udpsink host=10.0.0.54 port=5001
 
                     # also works (uvch can set more options)
                     # gst-launch-1.0 -e uvch264src device=/dev/video0 initial-bitrate=1000000 average-bitrate=10000000 iframe-period=1000 name=src auto-start=true src.vfsrc ! queue ! video/x-raw,width=320,height=240,framerate=30/1 ! fakesink src.vidsrc ! queue ! video/x-h264,width=1920,height=1080,framerate=30/1,profile=constrained-baseline ! h264parse ! rtph264pay pt=96 ! udpsink host=10.0.0.54 port=5001
@@ -120,8 +122,7 @@ class RemoteViewer:
     OUTPUT = Enum("OUPUT", "OPENCV WINDOW")
 
     def get_my_ip(self):
-        # capture_output is only in python 3.7 and above
-        # a = subprocess.run('ifconfig',capture_output=1)
+        # a = subprocess.run('ifconfig',capture_output=1) #capture_output is only in python 3.7 and above
         a = subprocess.run('ifconfig', stdout=subprocess.PIPE).stdout.strip()
         m = re.search( b"10\.0\.0\.[1-9][0-9]{0,2}", a)
         if m is not None:
@@ -137,7 +138,7 @@ class RemoteViewer:
         self.pub = UDPComms.Publisher(REQUEST_PORT)
 
         self.ip = self.get_my_ip()
-        self.resolution = (320, 240)
+        self.resolution = (320, 240) #TODO: make resultuiong be sent along
 
         self.process = None
         self.remote_host = None
@@ -220,10 +221,13 @@ if __name__ == "__main__":
     elif args.op == "usb":
         s = Server(Server.INPUT.USB_CAM)
         s.listen()
+    elif args.op == "h264":
+        s = Server(Server.INPUT.USB_H264)
+        s.listen()
 
     elif args.op == "viewer":
         r = RemoteViewer()
-        r.stream("acrocart")
+        r.stream("acrocart") #TODO: change to specified hostname
 
     else:
         print("argument error")
