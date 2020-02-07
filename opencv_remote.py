@@ -1,6 +1,7 @@
 import shlex
 import os
 import subprocess
+import signal
 import UDPComms
 import re
 from imutils.video import VideoStream, FileVideoStream
