@@ -25,7 +25,7 @@ class ProcessMonitor:
 
         # setting preexec_fn=os.setsid allows us to kill the process group allowing for shell=True
         # without it calling process.terminate() would only kill the shell and not the underlying process
-        self.process = subprocess.Popen(self.cmd, shell=True stdin=subprocess.PIPE, preexec_fn=os.setsid)
+        self.process = subprocess.Popen(self.cmd, shell=True, stdin=subprocess.PIPE, preexec_fn=os.setsid)
 
         # shell=True is needed as some commands have a shell pipe in them (raspivid specifically)
         # self.process = subprocess.Popen(shlex.split(self.cmd), stdin=subprocess.PIPE)
