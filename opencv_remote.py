@@ -2,14 +2,18 @@ import shlex
 import os
 import subprocess
 import signal
-import UDPComms
 import re
-from imutils.video import VideoStream, FileVideoStream
-import cv2, imutils
-
-
 from enum import Enum
 import time
+
+import UDPComms
+
+try:
+    from imutils.video import VideoStream, FileVideoStream
+    import cv2, imutils
+except ImportError:
+    cv2 = None
+
 
 REQUEST_PORT = 5000
 
@@ -50,6 +54,9 @@ class Server:
         if mode == None:
             mode = self.INPUT.RPI_CAM
         self.mode = mode
+
+        if(mode == self.INPUT.OPENCV and cv2 is None):
+            raise ImportError("no opencv installed on this system")
 
         self.sub = UDPComms.Subscriber(REQUEST_PORT, timeout=0)
         self.hostname = subprocess.run('hostname', stdout=subprocess.PIPE).stdout.strip().decode("utf-8")
