@@ -58,32 +58,35 @@ class Server:
 
     def listen(self,loop=True):
         """" block until connection from viewer """
-        # print("looking for ", self.hostname)
+        while 1:
+            self.parse_messages()
+
+    def parse_messages(self):
         while 1:
             try:
                 msg = self.sub.recv()
                 print("get msg: ", msg)
             except UDPComms.timeout:
-                if not loop:
-                    return
-                
+                break
             else:
                 if msg['host'] ==  self.hostname:
                     if msg.get('cmd') ==  'close':
                         self.process.stop()
                     else:
                         time.sleep(1) # sleep is necessary to not race ahead of viewer
-                        self.init_process(msg["port"] , msg["ip"])
-                        if self.mode == self.INPUT.OPENCV:
-                            return
+                        cmd = self.get_cmd(msg)
+                        self.process.start(cmd)
 
 
     """ display new image array on remote viewer """
     def imshow(self, name, img):
-        self.listen(loop=False)
+        if self.mode != self.INPUT.OPENCV:
+            raise ValueError("imshow is only available in OPENCV mode")
 
-        if self.mode != self.INPUT.OPENCV or self.process is None:
-            print("Error")
+        self.parse_messages()
+
+        if self.process.process is None:
+            print("No viewer connected")
             return
 
         self.process.process.stdin.write(cv2.cvtColor(img, cv2.COLOR_BGR2YUV_I420))
