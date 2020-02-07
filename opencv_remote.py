@@ -212,7 +212,7 @@ class RemoteViewer:
 import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('op', choices=['server', 'usb','viewer'])
+    parser.add_argument('op', choices=['server', 'usb','viewer', 'h264'])
     args = parser.parse_args()
 
     if args.op == "server":
