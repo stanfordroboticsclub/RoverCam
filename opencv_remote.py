@@ -65,6 +65,7 @@ class Server:
         messages = self.sub.get_list()
         for msg in messages:
             if msg['host'] ==  self.hostname:
+                print("got ", msg)
                 if msg.get('cmd') ==  'close':
                     self.process.stop()
                 else:
