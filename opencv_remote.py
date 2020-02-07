@@ -96,16 +96,16 @@ class Server:
         if self.mode == self.INPUT.OPENCV:
             cmd = 'gst-launch-1.0 -v fdsrc ! videoparse format="i420" width=320 height=240' +\
                   ' ! x264enc speed-preset=1 tune=zerolatency bitrate=1000000' +\
-                  " ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
+                  " ! rtph264pay pt=96 ! udpsink host={} port={}".format(ip,port)
 
         elif self.mode == self.INPUT.RPI_CAM:
             cmd = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 -e fdsrc" +\
-                  " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
+                  " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(ip,port)
                 # also works on new os
                 # gst-launch-1.0 v4l2src ! video/x-h264,width=1280,height=720,framerate=30/1 ! h264parse ! rtph264pay pt=127 config-interval=4 ! udpsink host=10.0.0.54 port=5001 sync=false
         elif self.mode == self.INPUT.USB_CAM:
             cmd = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-h264,width=1280,height=720 "+\
-                  " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port))
+                  " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(ip,port))
                     # works 180ms of laterncy
                     #gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480 ! x264enc bitrate=1000000 speed-preset=1 tune=zerolatency ! rtph264pay pt=96 ! udpsink host=10.0.0.54 port=5001
 
