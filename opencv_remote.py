@@ -56,10 +56,6 @@ class Server:
 
         self.process = ProcessMonitor()
 
-    def listen(self,loop=True):
-        """" block until connection from viewer """
-        while 1:
-            self.parse_messages()
 
     def parse_messages(self):
         messages = self.sub.get_list()
@@ -73,6 +69,13 @@ class Server:
                     cmd = self.get_cmd(msg)
                     self.process.start(cmd)
 
+    def listen(self):
+        """" block forever parsing messages """
+        if self.mode == self.INPUT.OPENCV:
+            raise ValueError("listen is only available in non OPENCV mode")
+
+        while 1:
+            self.parse_messages()
 
     """ display new image array on remote viewer """
     def imshow(self, name, img):
@@ -98,6 +101,7 @@ class Server:
 
         elif self.mode == self.INPUT.RPI_CAM:
             # works 120ms of latency
+            # used Pi's H264 encoder so can only run one of those
             cmd = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 -e fdsrc" +\
                   " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(ip,port)
 
@@ -105,11 +109,14 @@ class Server:
                 # gst-launch-1.0 v4l2src ! video/x-h264,width=1280,height=720,framerate=30/1 ! h264parse ! rtph264pay pt=127 config-interval=4 ! udpsink host=10.0.0.54 port=5001 sync=false
         elif self.mode == self.INPUT.USB_CAM:
             # works 180ms of latency
+            # used Pi's H264 encoder so can only run one of those
             cmd = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480 " +\
                    "! x264enc bitrate=1000000 speed-preset=1 tune=zerolatency ! rtph264pay pt=96 ! udpsink host={} port={}".format(ip,port))
 
         elif self.mode == self.INPUT.USB_H264:
-            # works 120-180ms of latency. Can support multiple cameras
+            # works 120-180ms of latency
+            # encodes H264 on the camera so supperts multiples cameras
+            # for some reason it only works with c920 not c930e :(
             cmd = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-h264,width=1280,height=720 "+\
                   " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(ip,port))
 
@@ -120,6 +127,7 @@ class Server:
         print(cmd)
         return cmd
 
+# TODO: this class is a mess!
 class RemoteViewer:
     OUTPUT = Enum("OUPUT", "OPENCV WINDOW")
 
@@ -215,6 +223,7 @@ import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('op', choices=['server', 'usb','viewer', 'h264'])
+    parser.add_argument('hostname')
     args = parser.parse_args()
 
     if args.op == "server":
@@ -229,7 +238,7 @@ if __name__ == "__main__":
 
     elif args.op == "viewer":
         r = RemoteViewer()
-        r.stream("acrocart") #TODO: change to specified hostname
+        r.stream(args.hostname)
 
     else:
         print("argument error")
