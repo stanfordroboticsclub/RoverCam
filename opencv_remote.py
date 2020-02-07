@@ -48,12 +48,8 @@ class Server:
         if self.process != None:
             self.process.terminate()
             time.sleep(1)
-            p = self.process.poll()
-            print(p)
             while self.process.poll() == None:
-                print("killing")
-                self.process.terminate()
-                # self.process.kill()
+                self.process.kill()
         self.process = None
 
 
@@ -83,37 +79,30 @@ class Server:
                             ' ! x264enc speed-preset=1 tune=zerolatency bitrate=1000000' +\
                             " ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
         print(arg)
-        # args = shlex.split(arg)
         self.process = subprocess.Popen(arg, stdin=subprocess.PIPE, shell=True)
 
     def run_rpi(self, port, host):
         arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 -e fdsrc" +\
               " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
         print(arg)
-        # args = shlex.split(arg)
         # also works on new os
         # gst-launch-1.0 v4l2src ! video/x-h264,width=1280,height=720,framerate=30/1 ! h264parse ! rtph264pay pt=127 config-interval=4 ! udpsink host=10.0.0.54 port=5001 sync=false
 
-        self.process = subprocess.Popen(arg, shell=True)
-        # self.process.wait()
-        # print("video process died")
+        self.process = subprocess.Popen(shlex.split(arg))
 
     def run_usb(self, port, host):
         # doesn't work
-        arg = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-h264,width=640,height=480 "+\
+        arg = ("gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-h264,width=1280,height=720 "+\
               " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port))
         print(arg)
-        # args = shlex.split(arg)
 
         # works 180ms of laterncy
         #gst-launch-1.0 v4l2src device=/dev/video0 ! video/x-raw,width=640,height=480 ! x264enc bitrate=1000000 speed-preset=1 tune=zerolatency ! rtph264pay pt=96 ! udpsink host=10.0.0.54 port=5001
 
-        #should work up doesn't
+        # also works (uvch can set more options)
         # gst-launch-1.0 -e uvch264src device=/dev/video0 initial-bitrate=1000000 average-bitrate=10000000 iframe-period=1000 name=src auto-start=true src.vfsrc ! queue ! video/x-raw,width=320,height=240,framerate=30/1 ! fakesink src.vidsrc ! queue ! video/x-h264,width=1920,height=1080,framerate=30/1,profile=constrained-baseline ! h264parse ! rtph264pay pt=96 ! udpsink host=10.0.0.54 port=5001
 
-        self.process = subprocess.Popen(arg, shell=True)
-        # self.process.wait()
-        # print("video process died")
+        self.process = subprocess.Popen(shlex.split(arg))
 
 class RemoteViewer:
     OUTPUT = Enum("OUPUT", "OPENCV WINDOW")
@@ -141,10 +130,10 @@ class RemoteViewer:
         self.remote_host = None
 
     def close(self):
-        # send 3 times for reliability :P
         if self.remote_host is None:
             print("Error")
             return
+        # send 3 times for reliability :P
         self.pub.send({"host": self.remote_host, "cmd": "close"})
         self.pub.send({"host": self.remote_host, "cmd": "close"})
         self.pub.send({"host": self.remote_host, "cmd": "close"})
