@@ -79,7 +79,8 @@ class Server:
                             ' ! x264enc speed-preset=1 tune=zerolatency bitrate=1000000' +\
                             " ! rtph264pay pt=96 ! udpsink host={} port={}".format(host,port)
         print(arg)
-        self.process = subprocess.Popen(arg, stdin=subprocess.PIPE, shell=True)
+        # self.process = subprocess.Popen(arg, stdin=subprocess.PIPE, shell=True)
+        self.process = subprocess.Popen(shell.split(arg), stdin=subprocess.PIPE)
 
     def run_rpi(self, port, host):
         arg = "raspivid -fps 26 -h 720 -w 1280 -md 6 -n -t 0 -b 1000000 -o - | gst-launch-1.0 -e fdsrc" +\
