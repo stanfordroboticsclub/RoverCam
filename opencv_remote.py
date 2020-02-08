@@ -229,26 +229,28 @@ class RemoteViewer:
 import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('op', choices=['server', 'usb','viewer', 'h264'])
-    parser.add_argument('hostname', default=None)
+    subparsers = parser.add_subparsers(dest='subparser')
+
+    server = subparsers.add_parser("server")
+    server.add_argument('source', help="where should the video come from", choices=['rpi', 'usb','h264'])
+
+    viewer = subparsers.add_parser("viewer")
+    viewer.add_argument('hostname', help="hostname of the computer we want to view")
+
     args = parser.parse_args()
 
-    if args.op == "server":
-        s = Server()
-        s.listen()
-    elif args.op == "usb":
-        s = Server(Server.INPUT.USB_CAM)
-        s.listen()
-    elif args.op == "h264":
-        s = Server(Server.INPUT.USB_H264)
-        s.listen()
-
-    elif args.op == "viewer":
+    if args.subparser == 'viewer':
         r = RemoteViewer()
-        if args.hostname is None:
-            raise ValueError("need to specify hostname")
         r.stream(args.hostname)
 
-    else:
-        print("argument error")
+    elif args.subparser == 'server':
+        if args.source == "rpi":
+            s = Server(Server.INPUT.RPI_CAM)
+            s.listen()
+        elif args.source == "usb":
+            s = Server(Server.INPUT.USB_CAM)
+            s.listen()
+        elif args.source == "h264":
+            s = Server(Server.INPUT.USB_H264)
+            s.listen()
 
