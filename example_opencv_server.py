@@ -8,8 +8,7 @@ import cv2
 vs = VideoStream(usePiCamera=0).start()
 time.sleep(1.0)
 
-from opencv_remote import Server
-
+from CameraStream import Server
 server = Server(Server.INPUT.OPENCV)
 
 while True:

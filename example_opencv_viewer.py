@@ -1,7 +1,8 @@
 
+# still a work in progress
 import cv2
 
-from opencv_remote import RemoteViewer
+from CameraStream import RemoteViewer
 import time
 
 r = RemoteViewer(RemoteViewer.OUTPUT.OPENCV)
