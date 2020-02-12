@@ -7,7 +7,7 @@ cd $FOLDER
 #. raspi-config nonint
 #do_camera 1
 
-python3 setup.py install
+python3 setup.py clean --all install
 
 yes | sudo apt-get install \
 gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
