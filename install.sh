@@ -10,7 +10,7 @@ cd $FOLDER
 python3 setup.py clean --all install
 
 yes | sudo apt-get install \
-gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+gstreamer1.0-tools gstreamer1.0-plugins-bad gstreamer1.0-plugins-good libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-ugly
 
 # sudo apt install -y autoconf automake libtool pkg-config
 # gst-rpicamsrc-master is no longer needed! (building to from scratch broke often
