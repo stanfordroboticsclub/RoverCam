@@ -50,10 +50,11 @@ class ProcessMonitor:
 
 class Server:
     INPUT = Enum("INPUT", "RPI_CAM USB_CAM OPENCV USB_H264")
-    def __init__(self, mode = None):
+    def __init__(self, mode = None, name = None):
         if mode == None:
             mode = self.INPUT.RPI_CAM
         self.mode = mode
+        self.name = name
 
         if(mode == self.INPUT.OPENCV and cv2 is None):
             raise ImportError("no opencv installed on this system")
@@ -68,6 +69,8 @@ class Server:
         messages = self.sub.get_list()
         for msg in messages:
             if msg['host'] ==  self.hostname:
+                if msg.get('name') != self.name: # get returns None when key not found
+                    continue
                 print("got ", msg)
                 if msg.get('cmd') ==  'close':
                     self.process.stop()
@@ -159,6 +162,7 @@ class RemoteViewer:
 
         self.process = None
         self.remote_host = None
+        self.camera_name = None
 
     def close(self):
         if self.remote_host is None:
@@ -175,7 +179,7 @@ class RemoteViewer:
             print("Error")
             return
 
-        self.pub.send({"ip": self.ip, "host": self.remote_host, "resolution": self.resolution, "port":port})
+        self.pub.send({"ip": self.ip, "host": self.remote_host, "resolution": self.resolution, "port":port, "name":self.camera_name})
 
         if self.mode == self.OUTPUT.WINDOW:
             # caps="application/x-rtp" is what makes things slow. replaces with gdppay
@@ -196,8 +200,9 @@ class RemoteViewer:
     def __del__(self):
         self.close()
 
-    def stream(self, hostname):
+    def stream(self, hostname, camera_name = None):
         self.remote_host = hostname
+        self.camera_name = camera_name
         self.open()
 
         if self.mode == self.OUTPUT.WINDOW:
@@ -233,24 +238,26 @@ if __name__ == "__main__":
 
     server = subparsers.add_parser("server")
     server.add_argument('source', help="where should the video come from", choices=['rpi', 'usb','h264'])
+    server.add_argument('camera_name', nargs='?', default=None, help="used to disambiguate multiple cameras on one pi")
 
     viewer = subparsers.add_parser("viewer")
     viewer.add_argument('hostname', help="hostname of the computer we want to view")
+    viewer.add_argument('camera_name', nargs='?', default=None, help="used to disambiguate multiple cameras on one pi")
 
     args = parser.parse_args()
 
     if args.subparser == 'viewer':
         r = RemoteViewer()
-        r.stream(args.hostname)
+        r.stream(args.hostname, args.camera_name)
 
     elif args.subparser == 'server':
         if args.source == "rpi":
-            s = Server(Server.INPUT.RPI_CAM)
+            s = Server(Server.INPUT.RPI_CAM, args.camera_name)
             s.listen()
         elif args.source == "usb":
-            s = Server(Server.INPUT.USB_CAM)
+            s = Server(Server.INPUT.USB_CAM, args.camera_name)
             s.listen()
         elif args.source == "h264":
-            s = Server(Server.INPUT.USB_H264)
+            s = Server(Server.INPUT.USB_H264, args.camera_name)
             s.listen()
 
