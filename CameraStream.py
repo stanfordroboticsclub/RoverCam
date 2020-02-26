@@ -181,10 +181,10 @@ class RemoteViewer:
                 with closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as s:
                     s.bind(('', port))
                     return port
-                except OSError:
-                    port += 1
-                    if port > 7000:
-                        raise
+            except OSError:
+                port += 1
+                if port > 7000:
+                    raise
 
     def open(self):
         port = self.get_free_port()
