@@ -175,9 +175,9 @@ class RemoteViewer:
             print("Error")
             return
         # send 3 times for reliability :P
-        self.pub.send({"host": self.remote_host, "cmd": "close"})
-        self.pub.send({"host": self.remote_host, "cmd": "close"})
-        self.pub.send({"host": self.remote_host, "cmd": "close"})
+        self.pub.send({"host": self.remote_host, "cmd": "close", "name":self.camera_name})
+        self.pub.send({"host": self.remote_host, "cmd": "close", "name":self.camera_name})
+        self.pub.send({"host": self.remote_host, "cmd": "close", "name":self.camera_name})
 
     def get_free_port(self):
         port = 5001
