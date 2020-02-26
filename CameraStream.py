@@ -6,6 +6,7 @@ import re
 from enum import Enum
 import time
 from contextlib import closing
+import socket
 
 import UDPComms
 
@@ -125,15 +126,15 @@ class Server:
         elif self.mode == self.INPUT.USB_CAM:
             # works 180ms of latency
             # used Pi's H264 encoder so can only run one of those
-            cmd = ("gst-launch-1.0 v4l2src device={} ! video/x-raw,width=640,height=480 " +\
-                   "! x264enc bitrate=1000000 speed-preset=1 tune=zerolatency ! rtph264pay pt=96 ! udpsink host={} port={}".format(self.device, ip,port))
+            cmd = ("gst-launch-1.0 v4l2src device={} ! video/x-raw,width=640,height=480 ".format(self.device) +\
+                   "! x264enc bitrate=1000000 speed-preset=1 tune=zerolatency ! rtph264pay pt=96 ! udpsink host={} port={}".format(ip,port))
 
         elif self.mode == self.INPUT.USB_H264:
             # works 120-180ms of latency
             # encodes H264 on the camera so supperts multiples cameras
             # for some reason it only works with c920 not c930e :(
-            cmd = ("gst-launch-1.0 v4l2src device={} ! video/x-h264,width=1280,height=720 "+\
-                  " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(self.device, ip,port))
+            cmd = ("gst-launch-1.0 v4l2src device={} ! video/x-h264,width=1280,height=720 ".format(self.device)+\
+                  " ! h264parse ! rtph264pay pt=96 ! udpsink host={} port={}".format(ip,port) )
 
                     # also works (uvch can set more options)
                     # gst-launch-1.0 -e uvch264src device=/dev/video0 initial-bitrate=1000000 average-bitrate=10000000 iframe-period=1000 name=src auto-start=true src.vfsrc ! queue ! video/x-raw,width=320,height=240,framerate=30/1 ! fakesink src.vidsrc ! queue ! video/x-h264,width=1920,height=1080,framerate=30/1,profile=constrained-baseline ! h264parse ! rtph264pay pt=96 ! udpsink host=10.0.0.54 port=5001
