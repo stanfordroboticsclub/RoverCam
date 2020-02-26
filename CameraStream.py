@@ -5,6 +5,7 @@ import signal
 import re
 from enum import Enum
 import time
+from contextlib import closing
 
 import UDPComms
 
@@ -173,8 +174,20 @@ class RemoteViewer:
         self.pub.send({"host": self.remote_host, "cmd": "close"})
         self.pub.send({"host": self.remote_host, "cmd": "close"})
 
+    def get_free_port(self):
+        port = 5001
+        while 1:
+            try:
+                with closing(socket.socket(socket.AF_INET, socket.SOCK_DGRAM)) as s:
+                    s.bind(('', port))
+                    return port
+                except OSError:
+                    port += 1
+                    if port > 7000:
+                        raise
+
     def open(self):
-        port = 5001 # TODO CHANGE TO pick free port
+        port = self.get_free_port()
         if self.remote_host is None:
             print("Error")
             return
